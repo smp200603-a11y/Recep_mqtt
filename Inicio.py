@@ -3,6 +3,25 @@ import paho.mqtt.client as mqtt
 import json
 import time
 
+# --- ESTILO VISUAL (ROSADO CLARO) ---
+st.markdown(
+    """
+    <style>
+    .stApp {
+        background: linear-gradient(135deg, #ffd6e7, #ffeaf4);
+        color: #5a2a4d;
+    }
+    h1, h2, h3 {
+        color: #b03060;
+        text-align: center;
+    }
+    p {
+        color: #5a2a4d;
+    }
+    </style>
+    """,
+    unsafe_allow_html=True
+)
 
 # Configuración de la página
 st.set_page_config(
@@ -25,7 +44,6 @@ def get_mqtt_message(broker, port, topic, client_id):
             message_received["payload"] = payload
             message_received["received"] = True
         except:
-            # Si no es JSON, guardar como texto
             message_received["payload"] = message.payload.decode()
             message_received["received"] = True
     
@@ -36,7 +54,6 @@ def get_mqtt_message(broker, port, topic, client_id):
         client.subscribe(topic)
         client.loop_start()
         
-        # Esperar máximo 5 segundos
         timeout = time.time() + 5
         while not message_received["received"] and time.time() < timeout:
             time.sleep(0.1)
@@ -53,70 +70,53 @@ def get_mqtt_message(broker, port, topic, client_id):
 with st.sidebar:
     st.subheader('⚙️ Configuración de Conexión')
     
-    broker = st.text_input('Broker MQTT', value='broker.mqttdashboard.com', 
-                           help='Dirección del broker MQTT')
+    broker = st.text_input('🌐 Broker MQTT', value='broker.mqttdashboard.com')
     
-    port = st.number_input('Puerto', value=1883, min_value=1, max_value=65535,
-                           help='Puerto del broker (generalmente 1883)')
+    port = st.number_input('🔌 Puerto', value=1883, min_value=1, max_value=65535)
     
-    topic = st.text_input('Tópico', value='Sensor/THP2',
-                          help='Tópico MQTT a suscribirse')
+    topic = st.text_input('📡 Tópico', value='Sensor/THP2')
     
-    client_id = st.text_input('ID del Cliente', value='streamlit_client',
-                              help='Identificador único para este cliente')
+    client_id = st.text_input('🆔 ID del Cliente', value='streamlit_client')
 
 # Título
-st.title('📡 Lector de Sensor MQTT')
+st.title('🌸 Lector de Sensor MQTT')
+st.subheader('📡 Monitoreo en tiempo real con estilo')
 
-# Información al inicio
-with st.expander('ℹ️ Información', expanded=False):
+# Información
+with st.expander('ℹ️ Cómo usar', expanded=False):
     st.markdown("""
-    ### Cómo usar esta aplicación:
-    
-    1. **Broker MQTT**: Ingresa la dirección del servidor MQTT en el sidebar
-    2. **Puerto**: Generalmente es 1883 para conexiones no seguras
-    3. **Tópico**: El canal al que deseas suscribirte
-    4. **ID del Cliente**: Un identificador único para esta conexión
-    5. Haz clic en **Obtener Datos** para recibir el mensaje más reciente
-    
-    ### Brokers públicos para pruebas:
-    - broker.mqttdashboard.com
-    - test.mosquitto.org
-    - broker.hivemq.com
+    ✨ Configura el broker en el panel lateral  
+    📡 Define el tópico  
+    🔘 Presiona el botón para obtener datos  
     """)
 
 st.divider()
 
-# Botón para obtener datos
+# Botón
 if st.button('🔄 Obtener Datos del Sensor', use_container_width=True):
-    with st.spinner('Conectando al broker y esperando datos...'):
+    with st.spinner('⏳ Conectando y esperando datos...'):
         sensor_data = get_mqtt_message(broker, int(port), topic, client_id)
         st.session_state.sensor_data = sensor_data
 
-# Mostrar resultados
+# Resultados
 if st.session_state.sensor_data:
     st.divider()
     st.subheader('📊 Datos Recibidos')
     
     data = st.session_state.sensor_data
     
-    # Verificar si hay error
     if isinstance(data, dict) and 'error' in data:
-        st.error(f"❌ Error de conexión: {data['error']}")
+        st.error(f"❌ Error: {data['error']}")
     else:
         st.success('✅ Datos recibidos correctamente')
         
-        # Mostrar datos en formato JSON
         if isinstance(data, dict):
-            # Mostrar cada campo en una métrica
             cols = st.columns(len(data))
             for i, (key, value) in enumerate(data.items()):
                 with cols[i]:
-                    st.metric(label=key, value=value)
+                    st.metric(label=f"🌷 {key}", value=value)
             
-            # Mostrar JSON completo
-            with st.expander('Ver JSON completo'):
+            with st.expander('🧾 Ver JSON completo'):
                 st.json(data)
         else:
-            # Si no es diccionario, mostrar como texto
             st.code(data)
