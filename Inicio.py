@@ -3,6 +3,7 @@ import paho.mqtt.client as mqtt
 import json
 import time
 
+
 # Configuración de la página
 st.set_page_config(
     page_title="Lector de Sensor MQTT",
