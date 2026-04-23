@@ -3,6 +3,13 @@ import paho.mqtt.client as mqtt
 import json
 import time
 
+# ⚠️ ESTO SIEMPRE VA PRIMERO
+st.set_page_config(
+    page_title="Lector de Sensor MQTT",
+    page_icon="📡",
+    layout="centered"
+)
+
 # --- ESTILO VISUAL (ROSADO CLARO) ---
 st.markdown(
     """
@@ -15,19 +22,9 @@ st.markdown(
         color: #b03060;
         text-align: center;
     }
-    p {
-        color: #5a2a4d;
-    }
     </style>
     """,
     unsafe_allow_html=True
-)
-
-# Configuración de la página
-st.set_page_config(
-    page_title="Lector de Sensor MQTT",
-    page_icon="📡",
-    layout="centered"
 )
 
 # Variables de estado
@@ -35,7 +32,6 @@ if 'sensor_data' not in st.session_state:
     st.session_state.sensor_data = None
 
 def get_mqtt_message(broker, port, topic, client_id):
-    """Función para obtener un mensaje MQTT"""
     message_received = {"received": False, "payload": None}
     
     def on_message(client, userdata, message):
@@ -66,35 +62,23 @@ def get_mqtt_message(broker, port, topic, client_id):
     except Exception as e:
         return {"error": str(e)}
 
-# Sidebar - Configuración
+# Sidebar
 with st.sidebar:
-    st.subheader('⚙️ Configuración de Conexión')
-    
+    st.subheader('⚙️ Configuración')
     broker = st.text_input('🌐 Broker MQTT', value='broker.mqttdashboard.com')
-    
     port = st.number_input('🔌 Puerto', value=1883, min_value=1, max_value=65535)
-    
     topic = st.text_input('📡 Tópico', value='Sensor/THP2')
-    
-    client_id = st.text_input('🆔 ID del Cliente', value='streamlit_client')
+    client_id = st.text_input('🆔 ID Cliente', value='streamlit_client')
 
 # Título
 st.title('🌸 Lector de Sensor MQTT')
-st.subheader('📡 Monitoreo en tiempo real con estilo')
-
-# Información
-with st.expander('ℹ️ Cómo usar', expanded=False):
-    st.markdown("""
-    ✨ Configura el broker en el panel lateral  
-    📡 Define el tópico  
-    🔘 Presiona el botón para obtener datos  
-    """)
+st.subheader('📡 Datos en tiempo real')
 
 st.divider()
 
 # Botón
-if st.button('🔄 Obtener Datos del Sensor', use_container_width=True):
-    with st.spinner('⏳ Conectando y esperando datos...'):
+if st.button('🔄 Obtener Datos', use_container_width=True):
+    with st.spinner('⏳ Conectando...'):
         sensor_data = get_mqtt_message(broker, int(port), topic, client_id)
         st.session_state.sensor_data = sensor_data
 
@@ -108,7 +92,7 @@ if st.session_state.sensor_data:
     if isinstance(data, dict) and 'error' in data:
         st.error(f"❌ Error: {data['error']}")
     else:
-        st.success('✅ Datos recibidos correctamente')
+        st.success('✅ Datos correctos')
         
         if isinstance(data, dict):
             cols = st.columns(len(data))
@@ -116,7 +100,7 @@ if st.session_state.sensor_data:
                 with cols[i]:
                     st.metric(label=f"🌷 {key}", value=value)
             
-            with st.expander('🧾 Ver JSON completo'):
+            with st.expander('🧾 JSON completo'):
                 st.json(data)
         else:
             st.code(data)
